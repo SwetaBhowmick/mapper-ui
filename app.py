@@ -13,17 +13,21 @@ if file:
 
     if st.button("Run Mapping"):
         
-        # Clean text
+        # Clean DE_translated for matching ONLY
         df["DE_translated"] = df["DE_translated"].astype(str).str.lower().str.strip()
-        df["FR"] = df["FR"].astype(str).str.lower().str.strip()
-
-        fr_list = df["FR"].dropna().tolist()
+        
+        # Keep original FR values (IMPORTANT)
+        fr_original = df["FR"].dropna().tolist()
+        
+        # Create lowercase version for matching
+        fr_lower = [str(x).lower().strip() for x in fr_original]
 
         # Matching function
         def match(text):
-            result = process.extractOne(text, fr_list)
+            result = process.extractOne(text, fr_lower)
             if result and result[1] > 90:
-                return result[0]
+                # Return ORIGINAL FR (preserves accents & caps)
+                return fr_original[result[2]]
             return ""
 
         df["Matched_FR"] = df["DE_translated"].apply(match)
