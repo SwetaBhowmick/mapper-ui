@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from rapidfuzz import process
 
-st.title("Color Mapping Tool (DE → FR)")
+st.title("Mapper UI (DE → FR)")
 
 file = st.file_uploader("Upload Excel File", type=["xlsx"])
 
