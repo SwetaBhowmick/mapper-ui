@@ -13,38 +13,29 @@ if file:
 
     if st.button("Run Mapping"):
         
-        # Clean columns
+        # Clean text
         df["US_clean"] = df["US"].astype(str).str.lower().str.strip()
         df["DE_translated_clean"] = df["DE_translated"].astype(str).str.lower().str.strip()
         
-        # Keep original DE (for output)
-        de_original = df["DE"].dropna().tolist()
-        
-        # Lower version for matching
-        de_translated_lower = df["DE_translated_clean"].tolist()
+        # Original DE
+        de_original = df["DE"].tolist()
+        de_translated_list = df["DE_translated_clean"].tolist()
 
-        # Matching function
         def match(text):
-            if pd.isna(text):
-                return ""
-            
             result = process.extractOne(
                 text,
-                de_translated_lower,
+                de_translated_list,
                 scorer=fuzz.token_sort_ratio
             )
-            
             if result and result[1] > 90:
                 return de_original[result[2]]
             return ""
 
-        # Apply mapping
         df["Mapped_DE"] = df["US_clean"].apply(match)
 
         st.success("Mapping Completed!")
         st.dataframe(df)
 
-        # Download
         csv = df.to_csv(index=False, encoding="utf-8-sig")
 
         st.download_button(
