@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from rapidfuzz import process
 
-st.title("Mapper UI (DE → FR)")
+st.title("Mapper UI (US → DE)")
 
 file = st.file_uploader("Upload Excel File", type=["xlsx"])
 
@@ -13,39 +13,42 @@ if file:
 
     if st.button("Run Mapping"):
         
-        # Clean DE_translated for matching only
-        df["DE_translated"] = df["DE_translated"].astype(str).str.lower().str.strip()
+        # Clean US for matching
+        df["US_clean"] = df["US"].astype(str).str.lower().str.strip()
         
-        # Keep original FR values (important for accents & caps)
-        fr_original = df["FR"].dropna().tolist()
+        # Clean DE_translated for matching
+        df["DE_translated_clean"] = df["DE_translated"].astype(str).str.lower().str.strip()
         
-        # Create lowercase version for matching
-        fr_lower = [str(x).lower().strip() for x in fr_original]
+        # Keep original DE values (for accents)
+        de_original = df["DE"].dropna().tolist()
+        
+        # Lowercase version for matching
+        de_translated_lower = df["DE_translated_clean"].tolist()
 
         # Matching function
         def match(text):
             if pd.isna(text):
                 return ""
             
-            result = process.extractOne(text, fr_lower)
+            result = process.extractOne(text, de_translated_lower)
             
             if result and result[1] > 90:
-                # Return original FR (preserves accents & capitalization)
-                return fr_original[result[2]]
+                # Return original DE (preserves umlauts, accents)
+                return de_original[result[2]]
             return ""
 
         # Apply matching
-        df["Matched_FR"] = df["DE_translated"].apply(match)
+        df["Mapped_DE"] = df["US_clean"].apply(match)
 
         st.success("Mapping Completed!")
         st.dataframe(df)
 
-        # FIX: Proper encoding for accents in CSV
+        # Preserve accents in CSV
         csv = df.to_csv(index=False, encoding="utf-8-sig")
 
         st.download_button(
             "Download Result",
             csv,
-            "mapped_colors.csv",
+            "mapped_us_de.csv",
             "text/csv"
         )
