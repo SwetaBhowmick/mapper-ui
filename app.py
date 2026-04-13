@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from rapidfuzz import process
+from rapidfuzz import process, fuzz
 
 st.title("Mapper UI (US → DE)")
 
@@ -13,16 +13,14 @@ if file:
 
     if st.button("Run Mapping"):
         
-        # Clean US for matching
+        # Clean columns
         df["US_clean"] = df["US"].astype(str).str.lower().str.strip()
-        
-        # Clean DE_translated for matching
         df["DE_translated_clean"] = df["DE_translated"].astype(str).str.lower().str.strip()
         
-        # Keep original DE values (for accents)
+        # Keep original DE (for output)
         de_original = df["DE"].dropna().tolist()
         
-        # Lowercase version for matching
+        # Lower version for matching
         de_translated_lower = df["DE_translated_clean"].tolist()
 
         # Matching function
@@ -30,20 +28,23 @@ if file:
             if pd.isna(text):
                 return ""
             
-            result = process.extractOne(text, de_translated_lower)
+            result = process.extractOne(
+                text,
+                de_translated_lower,
+                scorer=fuzz.token_sort_ratio
+            )
             
             if result and result[1] > 90:
-                # Return original DE (preserves umlauts, accents)
                 return de_original[result[2]]
             return ""
 
-        # Apply matching
+        # Apply mapping
         df["Mapped_DE"] = df["US_clean"].apply(match)
 
         st.success("Mapping Completed!")
         st.dataframe(df)
 
-        # Preserve accents in CSV
+        # Download
         csv = df.to_csv(index=False, encoding="utf-8-sig")
 
         st.download_button(
